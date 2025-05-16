@@ -142,13 +142,13 @@ const Home = () => {
       <section className="relative overflow-hidden bg-gradient-to-r from-primary to-secondary py-16 md:py-24">
         <div className="absolute inset-0 opacity-10">
           <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <defs>
+              <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
+                <path d="M 10 0 L 0 0 0 10" fill="none" stroke="white" strokeWidth="0.5" />
+              </pattern>
+            </defs>
             <path d="M0,0 L100,0 L100,100 L0,100 Z" fill="url(#grid)" />
           </svg>
-          <defs>
-            <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
-              <path d="M 10 0 L 0 0 0 10" fill="none" stroke="white" strokeWidth="0.5" />
-            </pattern>
-          </defs>
         </div>
         <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-3xl">
@@ -284,12 +284,6 @@ const Home = () => {
                       <p className="text-sm text-surface-600 dark:text-surface-400 mb-3 line-clamp-2">{product.description}</p>
                       <div className="flex justify-between items-center">
                         <span className="font-bold text-lg">${product.price.toFixed(2)}</span>
-                        <button 
-                          onClick={() => addToCart(product)}
-                          className="btn btn-primary text-xs py-1.5 px-3"
-                        >
-                          Add to Cart
-                        </button>
                         <button 
                           onClick={() => addToCart(product)}
                           className="btn btn-primary text-xs py-1.5 px-3"
