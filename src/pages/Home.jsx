@@ -290,6 +290,12 @@ const Home = () => {
                         >
                           Add to Cart
                         </button>
+                        <button 
+                          onClick={() => addToCart(product)}
+                          className="btn btn-primary text-xs py-1.5 px-3"
+                        >
+                          Add to Cart
+                        </button>
                       </div>
                     </div>
                   </motion.div>
