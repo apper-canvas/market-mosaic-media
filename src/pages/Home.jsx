@@ -375,7 +375,7 @@ const Home = () => {
                     </div>
                   </motion.div>
                 ))
-              ) : (
+              ) : filteredProducts.length === 0 ? (
                 <div className="col-span-full text-center py-16">
                   <div className="text-surface-500 text-lg mb-4">No products found in this category</div>
                   <button 
@@ -385,8 +385,7 @@ const Home = () => {
                     View all products
                   </button>
                 </div>
-              )}
-              {!isSearching && filteredProducts.length > 0 ? (
+              ) : !isSearching && filteredProducts.length > 0 ? (
                 filteredProducts.map(product => (
                   <motion.div
                     key={product.id}
