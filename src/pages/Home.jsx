@@ -375,7 +375,7 @@ const Home = () => {
                     </div>
                   </motion.div>
                 ))
-              ) : filteredProducts.length === 0 ? (
+              )) : filteredProducts.length === 0 ? (
                 <div className="col-span-full text-center py-16">
                   <div className="text-surface-500 text-lg mb-4">No products found in this category</div>
                   <button 
