@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
+import { useContext } from 'react';
 import MainFeature from '../components/MainFeature';
-import { getIcon } from '../utils/iconUtils';
+import { getIcon } from '../utils/iconUtils'; 
+import { CartContext } from '../App';
 
 const Home = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -11,6 +13,7 @@ const Home = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { dispatch } = useContext(CartContext);
 
   const categories = [
     { id: 'all', name: 'All Products', icon: 'ShoppingBag', image: 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60' },
@@ -162,11 +165,12 @@ const Home = () => {
 
   const SearchIcon = getIcon('Search');
   const XIcon = getIcon('X');
-  }, [selectedCategory]);
 
   const addToCart = (product) => {
+    dispatch({ type: 'ADD_ITEM', payload: product });
     toast.success(`Added ${product.name} to your cart!`);
   };
+  
 
   const CategoryIcon = (iconName) => {
     const Icon = getIcon(iconName);

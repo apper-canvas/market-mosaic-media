@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
 import { getIcon } from '../utils/iconUtils';
+import { CartContext } from '../App';
 
-const MainFeature = () => {
+const MainFeature = () => {  
   const [shoppingCart, setShoppingCart] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [subtotal, setSubtotal] = useState(0);
@@ -11,6 +12,7 @@ const MainFeature = () => {
   const [deliveryOption, setDeliveryOption] = useState('standard');
   const [promoCode, setPromoCode] = useState('');
   const [promoDiscount, setPromoDiscount] = useState(0);
+  const { items, dispatch: cartDispatch } = useContext(CartContext);
   const [isApplyingPromo, setIsApplyingPromo] = useState(false);
 
   // Icons
@@ -68,6 +70,13 @@ const MainFeature = () => {
     'SUMMER10': { discount: 0.1, message: '10% off your order' }
   };
 
+  // Initialize the shopping cart with items from context
+  useEffect(() => {
+    if (items && items.length > 0) {
+      setShoppingCart(items);
+    }
+  }, [items]);
+
   useEffect(() => {
     calculateSubtotal();
   }, [shoppingCart, promoDiscount]);
@@ -84,22 +93,8 @@ const MainFeature = () => {
   };
 
   const addToCart = (product) => {
-    setShoppingCart(prevCart => {
-      // Check if product already in cart
-      const existingItem = prevCart.find(item => item.id === product.id);
-      
-      if (existingItem) {
-        // Update quantity
-        return prevCart.map(item => 
-          item.id === product.id 
-            ? { ...item, quantity: item.quantity + 1 } 
-            : item
-        );
-      } else {
-        // Add new item
-        return [...prevCart, { ...product, quantity: 1 }];
-      }
-    });
+    // Use the global cart context
+    cartDispatch({ type: 'ADD_ITEM', payload: product });
     
     toast.success(`Added ${product.name} to your cart!`);
   };
