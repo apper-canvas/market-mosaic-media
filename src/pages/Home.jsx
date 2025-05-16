@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
 import MainFeature from '../components/MainFeature';
@@ -7,6 +7,9 @@ import { getIcon } from '../utils/iconUtils';
 const Home = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [featuredProducts, setFeaturedProducts] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  const [filteredProducts, setFilteredProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const categories = [
@@ -95,6 +98,28 @@ const Home = () => {
   ];
 
   useEffect(() => {
+    setFilteredProducts(featuredProducts);
+  }, [featuredProducts]);
+
+  // Debounced search function
+  const debounce = (func, delay) => {
+    let timeoutId;
+    return (...args) => {
+      if (timeoutId) clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        func(...args);
+      }, delay);
+    };
+  };
+
+  const handleSearch = useCallback(
+    debounce((term) => {
+      setIsSearching(false);
+    }, 300),
+    []
+  );
+
+  useEffect(() => {
     // Simulate loading data from API
     setIsLoading(true);
     setTimeout(() => {
@@ -105,6 +130,38 @@ const Home = () => {
       }
       setIsLoading(false);
     }, 600);
+  }, [selectedCategory]);
+
+  useEffect(() => {
+    if (searchTerm.trim() === '') {
+      setFilteredProducts(featuredProducts);
+      return;
+    }
+
+    setIsSearching(true);
+    handleSearch(searchTerm);
+
+    const term = searchTerm.toLowerCase().trim();
+    const results = featuredProducts.filter(
+      product => 
+        product.name.toLowerCase().includes(term) || 
+        product.description.toLowerCase().includes(term)
+    );
+    
+    setFilteredProducts(results);
+  }, [searchTerm, featuredProducts, handleSearch]);
+
+  const handleSearchInputChange = (e) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const clearSearch = () => {
+    setSearchTerm('');
+    setFilteredProducts(featuredProducts);
+  };
+
+  const SearchIcon = getIcon('Search');
+  const XIcon = getIcon('X');
   }, [selectedCategory]);
 
   const addToCart = (product) => {
@@ -221,11 +278,29 @@ const Home = () => {
 
       {/* Product Listings */}
       <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <h2 className="text-2xl md:text-3xl font-bold">
-            {selectedCategory === 'all' ? 'Featured Products' : 
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+          <h2 className="text-2xl md:text-3xl font-bold whitespace-nowrap">
+            {selectedCategory === 'all' && searchTerm === '' ? 'Featured Products' : 
+              searchTerm !== '' ? 'Search Results' :
               `${categories.find(c => c.id === selectedCategory)?.name}`}
           </h2>
+          <div className="relative w-full md:w-auto md:min-w-[300px]">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-3">
+              <SearchIcon className="w-5 h-5 text-surface-400" />
+            </div>
+            <input 
+              type="text" 
+              placeholder="Search products..." 
+              value={searchTerm}
+              onChange={handleSearchInputChange}
+              className="input pl-10 pr-10 py-2 w-full"
+            />
+            {searchTerm && (
+              <button className="absolute inset-y-0 right-0 flex items-center pr-3 text-surface-400 hover:text-surface-600" onClick={clearSearch}>
+                <XIcon className="w-5 h-5" />
+              </button>
+            )}
+          </div>
         </div>
 
         {isLoading ? (
@@ -249,9 +324,9 @@ const Home = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
-              className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
+              className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 relative"
             >
-              {featuredProducts.length > 0 ? (
+              {isSearching && (
                 featuredProducts.map(product => (
                   <motion.div
                     key={product.id}
@@ -305,6 +380,55 @@ const Home = () => {
                   </button>
                 </div>
               )}
+              {!isSearching && filteredProducts.length > 0 ? (
+                filteredProducts.map(product => (
+                  <motion.div
+                    key={product.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="card group hover:shadow-lg dark:hover:border-primary transition-all duration-300"
+                  >
+                    <div className="relative overflow-hidden h-48">
+                      <img 
+                        src={product.image} 
+                        alt={product.name} 
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
+                      <div className="absolute inset-0 bg-black bg-opacity-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                        <button 
+                          onClick={() => addToCart(product)}
+                          className="bg-white text-surface-800 rounded-full p-3 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300"
+                        >
+                          <ShoppingCartIcon className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="p-4">
+                      <div className="flex items-center mb-2">
+                        {renderRatingStars(product.rating)}
+                        <span className="text-sm text-surface-500 ml-1">({product.rating})</span>
+                      </div>
+                      <h3 className="font-semibold mb-1 group-hover:text-primary transition-colors">{product.name}</h3>
+                      <p className="text-sm text-surface-600 dark:text-surface-400 mb-3 line-clamp-2">{product.description}</p>
+                      <div className="flex justify-between items-center">
+                        <span className="font-bold text-lg">${product.price.toFixed(2)}</span>
+                        <button 
+                          onClick={() => addToCart(product)}
+                          className="btn btn-primary text-xs py-1.5 px-3"
+                        >
+                          Add to Cart
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))
+              ) : searchTerm && !isSearching ? (
+                <div className="col-span-full text-center py-16">
+                  <div className="text-surface-500 text-lg mb-4">No products found matching "{searchTerm}"</div>
+                  <button onClick={clearSearch} className="btn btn-outline">Clear Search</button>
+                </div>
+              ) : null}
             </motion.div>
           </AnimatePresence>
         )}
