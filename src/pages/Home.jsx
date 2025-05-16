@@ -10,12 +10,12 @@ const Home = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   const categories = [
-    { id: 'all', name: 'All Products', icon: 'ShoppingBag' },
-    { id: 'electronics', name: 'Electronics', icon: 'Smartphone' },
-    { id: 'clothing', name: 'Clothing', icon: 'Shirt' },
-    { id: 'books', name: 'Books', icon: 'BookOpen' },
-    { id: 'home', name: 'Home & Kitchen', icon: 'Lamp' },
-    { id: 'beauty', name: 'Beauty', icon: 'Sparkles' }
+    { id: 'all', name: 'All Products', icon: 'ShoppingBag', image: 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60' },
+    { id: 'electronics', name: 'Electronics', icon: 'Smartphone', image: 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60' },
+    { id: 'clothing', name: 'Clothing', icon: 'Shirt', image: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60' },
+    { id: 'books', name: 'Books', icon: 'BookOpen', image: 'https://images.unsplash.com/photo-1524578271613-d550eacf6090?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60' },
+    { id: 'home', name: 'Home & Kitchen', icon: 'Lamp', image: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60' },
+    { id: 'beauty', name: 'Beauty', icon: 'Sparkles', image: 'https://images.unsplash.com/photo-1522338242992-e1a54906a8da?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60' }
   ];
 
   // Mock products data
@@ -187,20 +187,32 @@ const Home = () => {
       {/* Category Navigation */}
       <div id="products" className="container mx-auto px-4 py-8">
         <h2 className="text-2xl md:text-3xl font-bold mb-6">Browse Categories</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6">
           {categories.map(category => {
             const Icon = getIcon(category.icon);
             return (
               <button
                 key={category.id}
                 onClick={() => setSelectedCategory(category.id)}
-                className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-200 
+                className={`relative flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-200 overflow-hidden h-32 group
                   ${selectedCategory === category.id 
-                    ? 'bg-primary text-white shadow-soft' 
+                    ? 'ring-4 ring-primary shadow-soft' 
                     : 'bg-white dark:bg-surface-800 shadow-card hover:shadow-soft dark:shadow-none dark:border dark:border-surface-700'}`}
               >
-                <Icon className="w-8 h-8 mb-2" />
-                <span className="text-sm font-medium">{category.name}</span>
+                <img 
+                  src={category.image} 
+                  alt={category.name}
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                />
+                <div className={`absolute inset-0 ${
+                  selectedCategory === category.id 
+                    ? 'bg-primary/70' 
+                    : 'bg-surface-900/50 group-hover:bg-surface-900/30'
+                  } transition-colors duration-200`}></div>
+                <div className="relative z-10 flex flex-col items-center text-white">
+                  <Icon className="w-8 h-8 mb-2" />
+                  <span className="text-sm font-medium">{category.name}</span>
+                </div>
               </button>
             );
           })}
