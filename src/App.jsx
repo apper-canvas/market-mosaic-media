@@ -134,6 +134,12 @@ const App = () => {
         >
           <div className="absolute top-4 right-4 z-10 flex items-center">
             <div className="relative mr-3">
+              <button 
+                onClick={toggleCart}
+                className="btn btn-primary mr-3 py-2 flex items-center"
+              >
+                Add to Cart <ShoppingCartIcon className="h-5 w-5 ml-2" />
+              </button>
               <button
                 onClick={toggleCart}
                 className="p-2 rounded-full bg-surface-200 dark:bg-surface-700 hover:bg-surface-300 dark:hover:bg-surface-600 transition-colors relative"
