@@ -166,9 +166,9 @@ const Home = () => {
   const SearchIcon = getIcon('Search');
   const XIcon = getIcon('X');
 
-  const addToCart = (product) => {
-    dispatch({ type: 'ADD_ITEM', payload: product });
-    toast.success(`Added ${product.name} to your cart!`);
+  const addToCart = (productItem) => {
+    dispatch({ type: 'ADD_ITEM', payload: productItem });
+    toast.success(`Added ${productItem.name} to your cart!`);
   };
   
 
