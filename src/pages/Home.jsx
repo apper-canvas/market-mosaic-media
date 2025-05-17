@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { toast } from 'react-toastify';
+import { toast } from 'react-toastify'; 
 import { useContext } from 'react';
 import MainFeature from '../components/MainFeature';
 import { getIcon } from '../utils/iconUtils'; 
@@ -13,7 +13,9 @@ const Home = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { dispatch } = useContext(CartContext);
+  
+  // Get cart context with null check
+  const cartContext = useContext(CartContext);
 
   const categories = [
     { id: 'all', name: 'All Products', icon: 'ShoppingBag', image: 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60' },
@@ -167,8 +169,11 @@ const Home = () => {
   const XIcon = getIcon('X');
 
   const addToCart = useCallback((product) => {
-    if (dispatch) {
-      dispatch({ type: 'ADD_ITEM', payload: product });
+    // Safely access dispatch from context
+    if (cartContext && cartContext.dispatch) {
+      cartContext.dispatch({
+        type: 'ADD_ITEM',
+        payload: product });
       toast.success(`Added ${product.name} to your cart!`);
     }
   }, [dispatch]);
@@ -367,7 +372,7 @@ const Home = () => {
                   key={product.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
+                  transition={{ duration: 0.3 }} 
                   className="card group hover:shadow-lg dark:hover:border-primary transition-all duration-300"
                 >
                   <div className="relative overflow-hidden h-48">
