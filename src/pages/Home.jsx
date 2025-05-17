@@ -324,83 +324,84 @@ const Home = () => {
           </div>
         ) : (
           <AnimatePresence mode="wait">
-            <motion.div
-              key={selectedCategory}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 relative"
-            >
-              {isSearching && (
-                <div className="col-span-full text-center py-16">
-                  <div className="text-surface-500 text-lg mb-4">Searching...</div>
-                </div>
-              )}
-              
-              {!isSearching && filteredProducts.length === 0 && (
-                <div className="col-span-full text-center py-16">
-                  <div className="text-surface-500 text-lg mb-4">No products found in this category</div>
-                  <button 
-                    onClick={() => setSelectedCategory('all')}
-                    className="btn btn-outline"
-                  >
-                    View all products
-                  </button>
-                </div>
-              )}
-              
-              {!isSearching && searchTerm && filteredProducts.length === 0 && (
-                <div className="col-span-full text-center py-16">
-                  <div className="text-surface-500 text-lg mb-4">No products found matching "{searchTerm}"</div>
-                  <button onClick={clearSearch} className="btn btn-outline">Clear Search</button>
-                </div>
-              )}
-              
-              {!isSearching && filteredProducts.length > 0 && 
-                filteredProducts.map(product => (
-                  <motion.div
-                    key={product.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="card group hover:shadow-lg dark:hover:border-primary transition-all duration-300"
-                  >
-                    <div className="relative overflow-hidden h-48">
-                      <img 
-                        src={product.image} 
-                        alt={product.name} 
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                      />
-                      <div className="absolute inset-0 bg-black bg-opacity-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+            <motion.div 
+                key={selectedCategory}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 relative"
+              >
+                {isSearching && (
+                  <div className="col-span-full text-center py-16">
+                    <div className="text-surface-500 text-lg mb-4">Searching...</div>
+                  </div>
+                )}
+                
+                {!isSearching && filteredProducts.length === 0 && (
+                  <div className="col-span-full text-center py-16">
+                    <div className="text-surface-500 text-lg mb-4">No products found in this category</div>
+                    <button 
+                      onClick={() => setSelectedCategory('all')}
+                      className="btn btn-outline"
+                    >
+                      View all products
+                    </button>
+                  </div>
+                )}
+                
+                {!isSearching && searchTerm && filteredProducts.length === 0 && (
+                  <div className="col-span-full text-center py-16">
+                    <div className="text-surface-500 text-lg mb-4">No products found matching "{searchTerm}"</div>
+                    <button onClick={clearSearch} className="btn btn-outline">Clear Search</button>
+                  </div>
+                )}
+                
+                {!isSearching && filteredProducts.length > 0 && 
+                  filteredProducts.map(product => (
+                    <motion.div
+                      key={product.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="card group hover:shadow-lg dark:hover:border-primary transition-all duration-300"
+                    >
+                      <div className="relative overflow-hidden h-48">
+                        <img 
+                          src={product.image} 
+                          alt={product.name} 
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        />
+                        <div className="absolute inset-0 bg-black bg-opacity-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                          <button 
+                            onClick={() => addToCart(product)}
+                            className="bg-white text-surface-800 rounded-full p-3 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300"
+                          >
+                            <ShoppingCartIcon className="w-5 h-5" />
+                          </button>
+                        </div>
+                      </div>
+                      <div className="p-4">
+                        <div className="flex items-center mb-2">
+                          {renderRatingStars(product.rating)}
+                          <span className="text-sm text-surface-500 ml-1">({product.rating})</span>
+                        </div>
+                        <h3 className="font-semibold mb-1 group-hover:text-primary transition-colors">{product.name}</h3>
+                        <p className="text-sm text-surface-600 dark:text-surface-400 mb-3 line-clamp-2">{product.description}</p>
+                        <div className="flex justify-between items-center">
+                          <span className="font-bold text-lg">${product.price.toFixed(2)}</span>
                         <button 
                           onClick={() => addToCart(product)}
-                          className="bg-white text-surface-800 rounded-full p-3 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300"
+                            className="btn btn-primary text-xs py-1.5 px-3"
                         >
-                          <ShoppingCartIcon className="w-5 h-5" />
+                            Add to Cart
                         </button>
                       </div>
                     </div>
-                    <div className="p-4">
-                      <div className="flex items-center mb-2">
-                        {renderRatingStars(product.rating)}
-                        <span className="text-sm text-surface-500 ml-1">({product.rating})</span>
-                      </div>
-                      <h3 className="font-semibold mb-1 group-hover:text-primary transition-colors">{product.name}</h3>
-                      <p className="text-sm text-surface-600 dark:text-surface-400 mb-3 line-clamp-2">{product.description}</p>
-                      <div className="flex justify-between items-center">
-                        <span className="font-bold text-lg">${product.price.toFixed(2)}</span>
-                        <button 
-                          onClick={() => addToCart(product)}
-                          className="btn btn-primary text-xs py-1.5 px-3"
-                        >
-                          Add to Cart
-                        </button>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-          </AnimatePresence>
+                    </motion.div>
+                  ))
+                }
+              </motion.div>
         )}
       </div>
 
