@@ -1,21 +1,26 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify'; 
-import { useContext } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import MainFeature from '../components/MainFeature';
 import { getIcon } from '../utils/iconUtils'; 
-import { CartContext } from '../App';
+import { addItem } from '../store/cartSlice';
+import { getProducts } from '../services/productService';
+import { addToCart } from '../services/cartItemService';
 
-const Home = () => {
+const Home = ({ isCartOpen, setIsCartOpen }) => {
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [featuredProducts, setFeaturedProducts] = useState([]);
+  const [products, setProducts] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   
-  // Get cart context with null check
-  const cartContext = useContext(CartContext);
+  // Redux
+  const dispatch = useDispatch();
+  const cartItems = useSelector((state) => state.cart.items);
+  const user = useSelector((state) => state.user.user);
 
   const categories = [
     { id: 'all', name: 'All Products', icon: 'ShoppingBag', image: 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60' },
@@ -26,85 +31,30 @@ const Home = () => {
     { id: 'beauty', name: 'Beauty', icon: 'Sparkles', image: 'https://images.unsplash.com/photo-1522338242992-e1a54906a8da?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60' }
   ];
 
-  // Mock products data
-  const allProducts = [
-    {
-      id: 1,
-      name: 'Wireless Earbuds',
-      price: 89.99,
-      category: 'electronics',
-      rating: 4.5,
-      image: 'https://images.unsplash.com/photo-1572569511254-d8f925fe2cbb?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60',
-      description: 'Premium wireless earbuds with noise cancellation and long battery life'
-    },
-    {
-      id: 2,
-      name: 'Casual T-Shirt',
-      price: 24.99,
-      category: 'clothing',
-      rating: 4.3,
-      image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60',
-      description: 'Comfortable cotton t-shirt for everyday wear'
-    },
-    {
-      id: 3,
-      name: 'Science Fiction Novel',
-      price: 14.95,
-      category: 'books',
-      rating: 4.7,
-      image: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60',
-      description: 'Bestselling sci-fi novel that takes you to a distant future'
-    },
-    {
-      id: 4,
-      name: 'Coffee Maker',
-      price: 129.99,
-      category: 'home',
-      rating: 4.8,
-      image: 'https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60',
-      description: 'Modern coffee maker with programmable settings and stylish design'
-    },
-    {
-      id: 5,
-      name: 'Facial Serum',
-      price: 34.50,
-      category: 'beauty',
-      rating: 4.6,
-      image: 'https://images.unsplash.com/photo-1571781926291-c477ebfd024b?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60',
-      description: 'Hydrating serum that nourishes and rejuvenates your skin'
-    },
-    {
-      id: 6,
-      name: 'Laptop',
-      price: 899.99,
-      category: 'electronics',
-      rating: 4.4,
-      image: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60',
-      description: 'Powerful laptop for work and entertainment'
-    },
-    {
-      id: 7,
-      name: 'Winter Jacket',
-      price: 129.95,
-      category: 'clothing',
-      rating: 4.2,
-      image: 'https://images.unsplash.com/photo-1551488831-00ddcb6c6bd3?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60',
-      description: 'Warm winter jacket with water-resistant exterior'
-    },
-    {
-      id: 8,
-      name: 'Smart Watch',
-      price: 199.99,
-      category: 'electronics',
-      rating: 4.6,
-      image: 'https://images.unsplash.com/photo-1579586337278-3befd40fd17a?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60',
-      description: 'Feature-rich smartwatch with health tracking and notifications'
+  useEffect(() => {
+    setFilteredProducts(products);
+  }, [products]);
+
+  // Load products from the database when the category changes
+  const loadProducts = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const categoryToFetch = selectedCategory === 'all' ? null : selectedCategory;
+      const loadedProducts = await getProducts(categoryToFetch);
+      setProducts(loadedProducts);
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Error loading products:', error);
+      setError('Failed to load products. Please try again.');
+      setIsLoading(false);
+      toast.error('Failed to load products');
     }
-  ];
+  }, [selectedCategory]);
 
   useEffect(() => {
-    setFilteredProducts(featuredProducts);
-  }, [featuredProducts]);
+    loadProducts();
+  }, [loadProducts]);
 
   // Debounced search function
   const debounce = (func, delay) => {
@@ -126,15 +76,6 @@ const Home = () => {
 
   useEffect(() => {
     // Simulate loading data from API
-    setIsLoading(true);
-    setTimeout(() => {
-      if (selectedCategory === 'all') {
-        setFeaturedProducts(allProducts);
-      } else {
-        setFeaturedProducts(allProducts.filter(product => product.category === selectedCategory));
-      }
-      setIsLoading(false);
-    }, 600);
   }, [selectedCategory]);
 
   useEffect(() => {
@@ -147,16 +88,18 @@ const Home = () => {
     handleSearch(searchTerm);
 
     const term = searchTerm.toLowerCase().trim();
-    const results = featuredProducts.filter(
+    const results = products.filter(
       product => 
         product.name.toLowerCase().includes(term) || 
         product.description.toLowerCase().includes(term)
     );
     
     setFilteredProducts(results);
-  }, [searchTerm, featuredProducts, handleSearch]);
+  }, [searchTerm, products, handleSearch]);
 
   const handleSearchInputChange = (e) => {
+    setIsSearching(true);
+    setError(null);
     setSearchTerm(e.target.value);
   };
 
@@ -168,14 +111,19 @@ const Home = () => {
   const SearchIcon = getIcon('Search');
   const XIcon = getIcon('X');
 
-  const addToCart = useCallback((product) => {
-    // Safely access dispatch from context
-    if (cartContext && cartContext.dispatch) {
-      cartContext.dispatch({
-        type: 'ADD_ITEM',
-        payload: product });
+  const handleAddToCart = useCallback(async (product) => {
+    try {
+      // First add to backend database
+      await addToCart(product);
+      
+      // Then update UI state through Redux
+      dispatch(addItem(product));
+      
+      // Show success message
       toast.success(`Added ${product.name} to your cart!`);
-    }
+    } catch (error) {
+      toast.error(`Failed to add ${product.name} to cart: ${error.message}`);
+    }  
   }, [cartContext]);
   
 
@@ -210,6 +158,20 @@ const Home = () => {
   };
 
   return (
+    <>
+      {/* Cart Dropdown */}
+      {isCartOpen && (
+        <CartDropdown 
+          items={cartItems} 
+          total={cartState.total} 
+          itemCount={cartState.itemCount}
+          onClose={() => setIsCartOpen(false)}
+          onViewCart={() => {
+            setIsCartOpen(false);
+            navigate('/cart');
+          }}
+        />
+      )}
     <div className="min-h-screen pb-20">
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-to-r from-primary to-secondary py-16 md:py-24">
@@ -294,10 +256,10 @@ const Home = () => {
 
       {/* Product Listings */}
       <div className="container mx-auto px-4 py-8">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
           <h2 className="text-2xl md:text-3xl font-bold whitespace-nowrap">
             {selectedCategory === 'all' && searchTerm === '' ? 'Featured Products' : 
-              searchTerm !== '' ? 'Search Results' :
+              searchTerm !== '' ? `Search Results for "${searchTerm}"` :
               `${categories.find(c => c.id === selectedCategory)?.name}`}
           </h2>
           <div className="relative w-full md:w-auto md:min-w-[300px]">
@@ -318,6 +280,14 @@ const Home = () => {
             )}
           </div>
         </div>
+        
+        {/* Error message */}
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+            <p>{error}</p>
+            <button onClick={loadProducts} className="underline mt-2">Retry</button>
+          </div>
+        )}
 
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -384,9 +354,9 @@ const Home = () => {
                     <div className="absolute inset-0 bg-black bg-opacity-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                       <button 
                         onClick={() => addToCart(product)}
-                        className="bg-white text-surface-800 rounded-full p-3 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300"
+                        onClick={() => handleAddToCart(product)}
                       >
-                        <ShoppingCartIcon className="w-5 h-5" />
+                        >
                       </button>
                     </div>
                   </div>
@@ -400,7 +370,7 @@ const Home = () => {
                     <div className="flex justify-between items-center">
                       <span className="font-bold text-lg">${(product.price || 0).toFixed(2)}</span>
                       <button 
-                        onClick={() => addToCart(product)}
+                        onClick={() => handleAddToCart(product)}
                         className="btn btn-primary text-xs py-1.5 px-3"
                       >
                         Add to Cart
@@ -416,6 +386,62 @@ const Home = () => {
 
       {/* Main Feature Section */}
       <MainFeature />
+    </div>
+  );
+};
+
+// Cart Dropdown Component
+const CartDropdown = ({ items, total, itemCount, onClose, onViewCart }) => {
+  const XIcon = getIcon('X');
+  
+  return (
+    <div className="absolute right-4 top-16 mt-2 w-72 bg-white dark:bg-surface-800 rounded-xl shadow-lg overflow-hidden z-50 border border-surface-200 dark:border-surface-700">
+      <div className="p-4 border-b border-surface-200 dark:border-surface-700 flex justify-between items-center">
+        <h3 className="font-medium">Your Cart ({itemCount})</h3>
+        <button 
+          onClick={onClose} 
+          className="text-surface-500 hover:text-surface-700"
+        >
+          <XIcon className="w-5 h-5" />
+        </button>
+      </div>
+      
+      <div className="max-h-80 overflow-y-auto">
+        {items.length === 0 ? (
+          <div className="p-4 text-center text-surface-500">
+            Your cart is empty
+          </div>
+        ) : (
+          <div>
+            {items.map(item => (
+              <div key={item.id} className="p-3 border-b border-surface-200 dark:border-surface-700 flex">
+                <img 
+                  src={item.image} 
+                  alt={item.Name} 
+                  className="w-14 h-14 object-cover rounded"
+                />
+                <div className="ml-3 flex-grow">
+                  <div className="font-medium">{item.Name}</div>
+                  <div className="flex justify-between mt-1">
+                    <div className="text-sm">{item.quantity} × ${item.price.toFixed(2)}</div>
+                    <div className="font-semibold">${(item.quantity * item.price).toFixed(2)}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      
+      <div className="p-4 border-t border-surface-200 dark:border-surface-700">
+        <div className="flex justify-between mb-4">
+          <span>Total:</span>
+          <span className="font-bold">${total.toFixed(2)}</span>
+        </div>
+        <button className="btn btn-primary w-full" onClick={onViewCart}>
+          View Cart & Checkout
+        </button>
+      </div>
     </div>
   );
 };

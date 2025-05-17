@@ -1,60 +1,28 @@
 import { useState, useEffect, useContext } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
+import { useDispatch, useSelector } from 'react-redux';
 import { getIcon } from '../utils/iconUtils';
-import { CartContext } from '../App';
+import { addItem, updateQuantity, removeItem } from '../store/cartSlice';
+import { addToCart, updateCartItemQuantity, removeFromCart } from '../services/cartItemService';
+import { createOrder } from '../services/orderService';
+import { clearCart } from '../store/cartSlice';
 
 const MainFeature = () => {  
-  const [shoppingCart, setShoppingCart] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [subtotal, setSubtotal] = useState(0);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [deliveryOption, setDeliveryOption] = useState('standard');
   const [promoCode, setPromoCode] = useState('');
   const [promoDiscount, setPromoDiscount] = useState(0);
-  const { items, dispatch: cartDispatch } = useContext(CartContext);
   const [isApplyingPromo, setIsApplyingPromo] = useState(false);
+  const [isProcessingOrder, setIsProcessingOrder] = useState(false);
+  
+  // Redux
+  const dispatch = useDispatch();
+  const cartItems = useSelector((state) => state.cart.items);
+  const cartTotal = useSelector((state) => state.cart.total);
+  const user = useSelector((state) => state.user.user);
 
-  // Icons
-  const ShoppingCartIcon = getIcon('ShoppingCart');
-  const TrashIcon = getIcon('Trash2');
-  const MinusIcon = getIcon('Minus');
-  const PlusIcon = getIcon('Plus');
-  const ArrowLeftIcon = getIcon('ArrowLeft');
-  const TagIcon = getIcon('Tag');
-  const CheckIcon = getIcon('Check');
-  const TruckIcon = getIcon('Truck');
-  const ZapIcon = getIcon('Zap');
-  const ShieldIcon = getIcon('Shield');
-  const CreditCardIcon = getIcon('CreditCard');
-
-  // Sample products
-  const recommendedProducts = [
-    {
-      id: 101,
-      name: 'Premium Headphones',
-      price: 149.99,
-      image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80',
-    },
-    {
-      id: 102,
-      name: 'Fitness Tracker Watch',
-      price: 79.99,
-      image: 'https://images.unsplash.com/photo-1575311373937-040b8e1fd5b6?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80',
-    },
-    {
-      id: 103,
-      name: 'Wireless Charger',
-      price: 34.99,
-      image: 'https://images.unsplash.com/photo-1636139264482-bbda80499838?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80',
-    },
-    {
-      id: 104,
-      name: 'Smart Speaker',
-      price: 89.99,
-      image: 'https://images.unsplash.com/photo-1589003077984-894e133dabab?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80',
-    }
-  ];
 
   // Delivery options
   const deliveryOptions = [
@@ -70,33 +38,16 @@ const MainFeature = () => {
     'SUMMER10': { discount: 0.1, message: '10% off your order' }
   };
 
-  // Initialize the shopping cart with items from context
-  useEffect(() => {
-    if (items && items.length > 0) {
-      setShoppingCart(items);
-    }
-  }, [items]);
-
-  useEffect(() => {
-    calculateSubtotal();
-  }, [shoppingCart, promoDiscount]);
-
-  const calculateSubtotal = () => {
-    const itemsTotal = shoppingCart.reduce((total, item) => {
-      return total + (item.price * item.quantity);
-    }, 0);
-    
-    // Apply promo discount
-    const discountedTotal = itemsTotal * (1 - promoDiscount);
-    
-    setSubtotal(discountedTotal);
-  };
-
-  const addToCart = (product) => {
-    // Use the global cart context
-    cartDispatch({ type: 'ADD_ITEM', payload: product });
-    
-    toast.success(`Added ${product.name} to your cart!`);
+  // Icons
+  const ShoppingCartIcon = getIcon('ShoppingCart');
+  const TrashIcon = getIcon('Trash2');
+  const MinusIcon = getIcon('Minus');
+  const PlusIcon = getIcon('Plus');
+  const ArrowLeftIcon = getIcon('ArrowLeft');
+  const TagIcon = getIcon('Tag');
+  const CheckIcon = getIcon('Check');
+  const ShieldIcon = getIcon('Shield');
+  const CreditCardIcon = getIcon('CreditCard');
   };
 
   const removeFromCart = (productId) => {
@@ -123,10 +74,11 @@ const MainFeature = () => {
     }
   };
 
-  const startCheckout = () => {
-    if (shoppingCart.length === 0) {
+  const startCheckout = async () => {
+    if (cartItems.length === 0) {
       toast.error("Your cart is empty");
       return;
+    }
     }
     setIsCheckingOut(true);
   };
@@ -154,19 +106,48 @@ const MainFeature = () => {
     }, 800);
   };
 
-  const handleCheckout = () => {
-    toast.success("Order placed successfully! Thank you for shopping with us.");
-    setShoppingCart([]);
-    setIsCartOpen(false);
-    setIsCheckingOut(false);
-    setPromoCode('');
-    setPromoDiscount(0);
+  const handleCheckout = async () => {
+    try {
+      setIsProcessingOrder(true);
+      
+      // Create the order in the database
+      const orderData = {
+        Name: `Order-${Date.now()}`,
+        subtotal: getSubtotal(),
+        delivery_option: deliveryOption,
+        delivery_price: getDeliveryPrice(),
+        promo_code: promoCode,
+        discount: promoDiscount,
+        total: getTotal()
+      };
+      
+      // Create the order
+      const order = await createOrder(orderData);
+      
+      // Clear the cart in Redux
+      dispatch(clearCart());
+      
+      // Reset UI state
+      setIsCartOpen(false);
+      setIsCheckingOut(false);
+      setPromoCode('');
+      setPromoDiscount(0);
+      
+      toast.success("Order placed successfully! Thank you for shopping with us.");
+    } catch (error) {
+      console.error("Error placing order:", error);
+      toast.error(`Failed to place order: ${error.message}`);
+    } finally {
+      setIsProcessingOrder(false);
+    }
   };
 
   const getDeliveryPrice = () => {
     const option = deliveryOptions.find(opt => opt.id === deliveryOption);
     return option ? option.price : 0;
   };
+  
+  const getSubtotal = () => cartTotal * (1 - promoDiscount);
 
   const getTotal = () => {
     return subtotal + getDeliveryPrice();
@@ -174,118 +155,64 @@ const MainFeature = () => {
 
   return (
     <section className="container mx-auto px-4 py-12 mb-16">
-      <div className="max-w-6xl mx-auto">
-        <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center">Your Shopping Cart</h2>
+      <div className="max-w-4xl mx-auto">
+        <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center">Checkout</h2>
         
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Recommended Products */}
-          <div className="w-full lg:w-2/3">
-            <div className="card p-6">
-              <h3 className="text-xl font-semibold mb-6">Recommended Products</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-                {recommendedProducts.map(product => (
-                  <motion.div
-                    key={product.id}
-                    whileHover={{ y: -5 }}
-                    className="card overflow-hidden group"
-                  >
-                    <div className="relative h-40 overflow-hidden">
-                      <img 
-                        src={product.image} 
-                        alt={product.name} 
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                      />
-                      <button
-                        onClick={() => addToCart(product)}
-                        className="absolute inset-0 flex items-center justify-center bg-primary/70 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                      >
-                        <span className="bg-white rounded-full p-2">
-                          <ShoppingCartIcon className="w-5 h-5 text-primary" />
-                        </span>
-                      </button>
-                    </div>
-                    <div className="p-4">
-                      <h4 className="font-medium text-sm mb-2 truncate">{product.name}</h4>
-                      <div className="flex justify-between items-center">
-                        <span className="font-bold">${product.price.toFixed(2)}</span>
-                        <button
-                          onClick={() => addToCart(product)}
-                          className="text-primary hover:text-primary-dark text-sm font-medium"
-                        >
-                          Add to Cart
-                        </button>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-          </div>
-          
-          {/* Shopping Cart */}
-          <div className="w-full lg:w-1/3">
-            <div className="card p-6 relative">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-semibold">Shopping Cart</h3>
-                <span className="bg-primary/10 text-primary px-2 py-1 rounded-full text-sm font-medium">
-                  {shoppingCart.reduce((total, item) => total + item.quantity, 0)} items
-                </span>
-              </div>
+        <div className="card p-6 relative">
+          <AnimatePresence mode="wait">
+            {isCheckingOut ? (
+              <motion.div
+                key="checkout"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <button 
+                  onClick={() => setIsCheckingOut(false)}
+                  className="inline-flex items-center text-sm text-primary font-medium mb-4"
+                >
+                  <ArrowLeftIcon className="w-4 h-4 mr-1" />
+                  Back to cart
+                </button>
 
-              <AnimatePresence mode="wait">
-                {isCheckingOut ? (
-                  <motion.div
-                    key="checkout"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <button 
-                      onClick={() => setIsCheckingOut(false)}
-                      className="inline-flex items-center text-sm text-primary font-medium mb-4"
-                    >
-                      <ArrowLeftIcon className="w-4 h-4 mr-1" />
-                      Back to cart
-                    </button>
-
-                    <div className="space-y-6">
-                      {/* Delivery Options */}
-                      <div>
-                        <h4 className="font-medium mb-3">Delivery Method</h4>
-                        <div className="space-y-3">
-                          {deliveryOptions.map(option => {
-                            const DeliveryIcon = getIcon(option.icon);
-                            return (
-                              <label 
-                                key={option.id}
-                                className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors
-                                  ${deliveryOption === option.id ? 
-                                    'border-primary bg-primary/5' : 
-                                    'border-surface-200 dark:border-surface-700'}`}
-                              >
-                                <input
-                                  type="radio"
-                                  name="delivery"
-                                  value={option.id}
-                                  checked={deliveryOption === option.id}
-                                  onChange={() => setDeliveryOption(option.id)}
-                                  className="sr-only"
-                                />
-                                <span className={`w-5 h-5 flex-shrink-0 rounded-full border ${
-                                  deliveryOption === option.id ? 
-                                    'border-primary bg-primary' : 
-                                    'border-surface-300 dark:border-surface-600'
-                                }`}>
-                                  {deliveryOption === option.id && (
-                                    <span className="w-full h-full flex items-center justify-center">
-                                      <CheckIcon className="w-3 h-3 text-white" />
-                                    </span>
-                                  )}
+                <div className="space-y-6">
+                  {/* Delivery Options */}
+                  <div>
+                    <h4 className="font-medium mb-3">Delivery Method</h4>
+                    <div className="space-y-3">
+                      {deliveryOptions.map(option => {
+                        const DeliveryIcon = getIcon(option.icon);
+                        return (
+                          <label 
+                            key={option.id}
+                            className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors
+                              ${deliveryOption === option.id ? 
+                                'border-primary bg-primary/5' : 
+                                'border-surface-200 dark:border-surface-700'}`}
+                          >
+                            <input
+                              type="radio"
+                              name="delivery"
+                              value={option.id}
+                              checked={deliveryOption === option.id}
+                              onChange={() => setDeliveryOption(option.id)}
+                              className="sr-only"
+                            />
+                            <span className={`w-5 h-5 flex-shrink-0 rounded-full border ${
+                              deliveryOption === option.id ? 
+                                'border-primary bg-primary' : 
+                                'border-surface-300 dark:border-surface-600'
+                            }`}>
+                              {deliveryOption === option.id && (
+                                <span className="w-full h-full flex items-center justify-center">
+                                  <CheckIcon className="w-3 h-3 text-white" />
                                 </span>
-                                <div className="ml-3 flex-grow">
-                                  <span className="flex items-center">
-                                    <DeliveryIcon className="w-4 h-4 mr-1 text-primary" />
+                              )}
+                            </span>
+                            <div className="ml-3 flex-grow">
+                              <span className="flex items-center">
+                                <DeliveryIcon className="w-4 h-4 mr-1 text-primary" />
                                     <span className="font-medium">{option.name}</span>
                                   </span>
                                   <div className="flex justify-between text-sm mt-1">
@@ -396,7 +323,7 @@ const MainFeature = () => {
 
                       <button
                         onClick={handleCheckout}
-                        className="btn btn-primary w-full py-3"
+                        className={`btn btn-primary w-full py-3 ${isProcessingOrder ? 'opacity-75 cursor-not-allowed' : ''}`}
                       >
                         Complete Order
                       </button>
@@ -410,37 +337,22 @@ const MainFeature = () => {
                     exit={{ opacity: 0, x: 20 }}
                     transition={{ duration: 0.3 }}
                   >
-                    {shoppingCart.length > 0 ? (
+                    {cartItems.length > 0 ? (
                       <>
                         <div className="overflow-y-auto max-h-64 space-y-4 mb-6">
-                          {shoppingCart.map(item => (
+                          {cartItems.map(item => (
                             <div 
                               key={item.id}
                               className="flex items-start py-3 border-b border-surface-200 dark:border-surface-700 last:border-0"
                             >
                               <img 
                                 src={item.image} 
-                                alt={item.name} 
+                                alt={item.Name} 
                                 className="w-16 h-16 object-cover rounded"
                               />
                               <div className="ml-4 flex-grow">
-                                <h4 className="font-medium">{item.name}</h4>
+                                <h4 className="font-medium">{item.Name}</h4>
                                 <div className="flex justify-between items-center mt-2">
-                                  <div className="flex items-center border rounded">
-                                    <button 
-                                      onClick={() => updateQuantity(item.id, -1)}
-                                      className="px-2 py-1 text-surface-500 hover:text-surface-700"
-                                    >
-                                      <MinusIcon className="w-4 h-4" />
-                                    </button>
-                                    <span className="px-3 py-1 font-medium">{item.quantity}</span>
-                                    <button 
-                                      onClick={() => updateQuantity(item.id, 1)}
-                                      className="px-2 py-1 text-surface-500 hover:text-surface-700"
-                                    >
-                                      <PlusIcon className="w-4 h-4" />
-                                    </button>
-                                  </div>
                                   <span className="font-bold">${(item.price * item.quantity).toFixed(2)}</span>
                                 </div>
                               </div>
@@ -457,7 +369,7 @@ const MainFeature = () => {
                         <div className="border-t border-surface-200 dark:border-surface-700 pt-4 pb-6">
                           <div className="flex justify-between mb-2">
                             <span className="text-surface-600 dark:text-surface-400">Subtotal</span>
-                            <span className="font-medium">${subtotal.toFixed(2)}</span>
+                            <span className="font-medium">${getSubtotal().toFixed(2)}</span>
                           </div>
                           <div className="text-sm text-surface-500 mb-4">
                             Taxes and shipping calculated at checkout
@@ -473,7 +385,7 @@ const MainFeature = () => {
                     ) : (
                       <div className="text-center py-12">
                         <ShoppingCartIcon className="w-16 h-16 mx-auto text-surface-300 dark:text-surface-600 mb-4" />
-                        <h4 className="text-lg font-medium mb-2">Your cart is empty</h4>
+                        <h4 className="text-lg font-medium mb-2">Your cart is empty!</h4>
                         <p className="text-surface-500 mb-6">Looks like you haven't added anything to your cart yet</p>
                         <button
                           onClick={toggleCart}
@@ -487,8 +399,6 @@ const MainFeature = () => {
                 )}
               </AnimatePresence>
             </div>
-          </div>
-        </div>
       </div>
     </section>
   );
