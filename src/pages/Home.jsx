@@ -396,8 +396,7 @@ const Home = () => {
                     </div>
                   </motion.div>
                 ))
-              ) : searchTerm && !isSearching ? (
-              ) : null }
+              ) : null}
           </AnimatePresence>
         )}
       </div>
