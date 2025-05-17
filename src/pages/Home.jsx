@@ -176,7 +176,7 @@ const Home = () => {
         payload: product });
       toast.success(`Added ${product.name} to your cart!`);
     }
-  }, [dispatch]);
+  }, [cartContext]);
   
 
   const CategoryIcon = (iconName) => {
