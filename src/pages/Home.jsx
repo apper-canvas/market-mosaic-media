@@ -80,7 +80,7 @@ const Home = ({ isCartOpen, setIsCartOpen }) => {
 
   useEffect(() => {
     if (searchTerm.trim() === '') {
-      setFilteredProducts(featuredProducts);
+      setFilteredProducts(products);
       return;
     }
 
@@ -105,7 +105,7 @@ const Home = ({ isCartOpen, setIsCartOpen }) => {
 
   const clearSearch = () => {
     setSearchTerm('');
-    setFilteredProducts(featuredProducts);
+    setFilteredProducts(products);
   };
 
   const SearchIcon = getIcon('Search');
@@ -124,7 +124,7 @@ const Home = ({ isCartOpen, setIsCartOpen }) => {
     } catch (error) {
       toast.error(`Failed to add ${product.name} to cart: ${error.message}`);
     }  
-  }, [cartContext]);
+  }, [dispatch]);
   
 
   const CategoryIcon = (iconName) => {
@@ -163,8 +163,8 @@ const Home = ({ isCartOpen, setIsCartOpen }) => {
       {isCartOpen && (
         <CartDropdown 
           items={cartItems} 
-          total={cartState.total} 
-          itemCount={cartState.itemCount}
+          total={cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0)} 
+          itemCount={cartItems.length}
           onClose={() => setIsCartOpen(false)}
           onViewCart={() => {
             setIsCartOpen(false);
@@ -353,10 +353,8 @@ const Home = ({ isCartOpen, setIsCartOpen }) => {
                     />
                     <div className="absolute inset-0 bg-black bg-opacity-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                       <button 
-                        onClick={() => addToCart(product)}
                         onClick={() => handleAddToCart(product)}
-                      >
-                        >
+                        className="btn btn-primary rounded-full p-2">
                       </button>
                     </div>
                   </div>
