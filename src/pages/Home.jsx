@@ -329,7 +329,7 @@ const Home = () => {
           </div>
         ) : (
           <AnimatePresence mode="wait">
-            <motion.div 
+            <motion.div
               key={selectedCategory}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -342,7 +342,7 @@ const Home = () => {
                   <div className="text-surface-500 text-lg mb-4">Searching...</div>
                 </div>
               )}
-              
+
               {!isSearching && filteredProducts.length === 0 && !searchTerm && (
                 <div className="col-span-full text-center py-16">
                   <div className="text-surface-500 text-lg mb-4">No products found in this category</div>
@@ -354,7 +354,7 @@ const Home = () => {
                   </button>
                 </div>
               )}
-              
+
               {!isSearching && searchTerm && filteredProducts.length === 0 && (
                 <div className="col-span-full text-center py-16">
                   <div className="text-surface-500 text-lg mb-4">No products found matching "{searchTerm}"</div>
@@ -362,7 +362,7 @@ const Home = () => {
                 </div>
               )}
               
-              {!isSearching && filteredProducts.length > 0 && filteredProducts.map(product => (
+              {!isSearching && filteredProducts.length > 0 && filteredProducts.map((product) => (
                 <motion.div
                   key={product.id}
                   initial={{ opacity: 0, y: 20 }}
@@ -372,9 +372,9 @@ const Home = () => {
                 >
                   <div className="relative overflow-hidden h-48">
                     <img 
-                      src={product.image || ""} 
-                      alt={product.name || "Product"} 
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      src={product.image || ""}
+                      alt={product.name || "Product"}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
                     />
                     <div className="absolute inset-0 bg-black bg-opacity-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                       <button 
@@ -394,8 +394,8 @@ const Home = () => {
                     <p className="text-sm text-surface-600 dark:text-surface-400 mb-3 line-clamp-2">{product.description || "No description available"}</p>
                     <div className="flex justify-between items-center">
                       <span className="font-bold text-lg">${(product.price || 0).toFixed(2)}</span>
-                        <button 
-                          onClick={() => addToCart(product)}
+                      <button 
+                        onClick={() => addToCart(product)}
                         className="btn btn-primary text-xs py-1.5 px-3"
                       >
                         Add to Cart
@@ -405,6 +405,7 @@ const Home = () => {
                 </motion.div>
               ))}
             </motion.div>
+          </AnimatePresence>
         )}
       </div>
 
